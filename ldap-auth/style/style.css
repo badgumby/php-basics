@@ -1,8 +1,9 @@
 body {
-
+  background: #3759e8;
 }
 
 div {
+  background: #fff;
   margin-top: 5%;
   border: 2px solid black;
   border-radius: 8px;
