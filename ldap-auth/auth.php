@@ -7,6 +7,16 @@ $samAccountName = $userExplode[0];
 $domain = $userExplode[1];
 $ldap = "ldaps://" . $domain;
 
+?>
+<html>
+<head>
+  <title>Auth</title>
+  <link rel = "stylesheet" type = "text/css" href = "style/style.css">
+</head>
+<body>
+
+<?php
+
 // Connect to AD
 $ds = ldap_connect($ldap) or die("Could not connect to LDAP");
 ldap_set_option ($ds, LDAP_OPT_REFERRALS, 0) or die('Unable to set LDAP opt referrals');
@@ -16,8 +26,25 @@ ldap_set_option($ds, LDAP_OPT_PROTOCOL_VERSION, 3) or die('Unable to set LDAP pr
 // If bind is successful
 if ($bind = ldap_bind($ds, $username, $password)) {
   ?>
-  <b>SAM Account Name: </b><?php echo $samAccountName; ?> <br />
-  <b>Domain: </b> <?php echo $domain; ?> <br />
+  <div>
+    <table>
+      <tr>
+        <td>
+          <b>SAM Account Name: </b>
+        </td>
+        <td>
+          <?php echo $samAccountName; ?>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <b>Domain: </b>
+        </td>
+        <td>
+          <?php echo $domain; ?>
+        </td>
+      </tr>
+
   <?php
 
   // Convert domain name to base DN for lookup
@@ -32,16 +59,42 @@ if ($bind = ldap_bind($ds, $username, $password)) {
   }
 
   // Display Base OU and LDAP server details
-  echo "<b>Base OU: </b>" . $ldap_dn . "<br />";
-  echo "<b>LDAP Server: </b>" . $ldap . "<br /><br />";
+  ?>
+  <tr>
+    <td>
+      <b>Base OU: </b>
+    </td>
+    <td>
+      <?php echo $ldap_dn; ?>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <b>LDAP Server: </b>
+    </td>
+    <td>
+      <?php echo $ldap; ?>
+    </td>
+  </tr>
+</table>
+</div>
 
+  <?php
   // Lookup user by SAMAccountName
   $results = ldap_search($ds,$ldap_dn,"(samaccountName=$samAccountName)",array("memberof"));
   $entries = ldap_get_entries($ds, $results);
 
+  // Count number of groups found
+  $count = count($entries[0]['memberof']);
+  // Subtract the 'count' key
+  $count = $count - 1;
+
   // Return groups
   $groupList = array();
-  echo "<b>Groups: </b><br />";
+  ?>
+  <div style="max-height=400px;overflow-y:auto;">
+    <b>Groups (<?php echo $count; ?>): </b><br />
+  <?php
   foreach ($entries[0]['memberof'] as $key => $value) {
     if ($key === "count") {
     } else {
@@ -51,14 +104,27 @@ if ($bind = ldap_bind($ds, $username, $password)) {
       echo $group . "<br />";
     }
   }
+  ?>
+  </div>
 
+  <?php
   // Check new array of groups for matching group
   if (in_array($groupName, $groupList)) {
-    echo "<br /><br />Found it: " . $groupName;
+    ?>
+    <div>
+      Found it: <?php echo $groupName; ?>
+    </div>
+    <?php
   }
 
 // If bind fails
 } else {
-  echo "User lookup fail. Incorrect password?";
+  ?>
+  <div>
+  User lookup fail. Incorrect password?
+  </div>
+  <?php
 }
 ?>
+</body>
+</html>
